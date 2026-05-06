@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from vigil_tasks.analysis import run_inference
 
 from vigil.core.config import settings
 
@@ -22,7 +23,12 @@ def create_app() -> FastAPI:
 
     @application.get("/health")
     async def health_check() -> dict[str, str]:
-        return {"status": "ok"}    
+        return {"status": "ok"}
+
+    @application.get("/test-task")
+    async def test_task():
+        run_inference.delay("test-123")
+        return {"status": "dispatched"}
 
     return application
 
