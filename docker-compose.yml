@@ -55,12 +55,16 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - postgres
-      - redis
-      - minio
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgresql+asyncpg://vigil:vigil_secret@postgres:5432/vigil
       REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
 
   # -------------------------
   # ML SERVICE (Celery worker)
@@ -71,10 +75,13 @@ services:
       dockerfile: ml-service/Dockerfile
     container_name: vigil-ml
     depends_on:
-      - redis
-      - postgres
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     environment:
-      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      DATABASE_URL: postgresql+asyncpg://vigil:vigil_secret@postgres:5432/vigil
 
 volumes:
   postgres_data:
