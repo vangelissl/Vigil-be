@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from vigil_tasks.analysis import run_inference
+from src.vigil.core.minio.client import upload_file
 
 from vigil.core.config import settings
 
@@ -29,6 +30,11 @@ def create_app() -> FastAPI:
     async def test_task():
         run_inference.delay("test-123")
         return {"status": "dispatched"}
+
+    @application.get("/test-upload")
+    async def test_upload():
+        upload_file()
+        return {"status": "uploaded"}
 
     return application
 
