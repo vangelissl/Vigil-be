@@ -1,4 +1,4 @@
-from vigil.shared.base import Entity
+from ....shared.base import Entity
 from .value_objects import UserId, Email, Username
 
 
