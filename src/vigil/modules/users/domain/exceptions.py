@@ -1,4 +1,4 @@
-from vigil.shared.exceptions import BusinessRuleException, BusinessRuleValidationException
+from ....shared.exceptions import BusinessRuleException, BusinessRuleValidationException
 
 
 class UserNotFoundError(BusinessRuleException):
