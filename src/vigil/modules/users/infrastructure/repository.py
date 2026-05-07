@@ -5,14 +5,14 @@ import uuid
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ports import UserRepositoryProtocol
+from ..ports import UserRepositoryProtocol
 
 from ..domain.exceptions import EmailAlreadyTakenError, UserAlreadyExistsError, UsernameAlreadyTakenError, UserNotFoundError
 from ..domain.value_objects import UserId, Username, Email
 from ..domain.entities import User
 
-from core.database.session import get_async_session
-from core.database.models.user import UserModel
+from vigil.core.database.session import get_async_session
+from vigil.core.database.models.user import UserModel
 
 
 class UserRepository(UserRepositoryProtocol):
