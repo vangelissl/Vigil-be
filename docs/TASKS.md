@@ -91,12 +91,12 @@
 **Goal:** Define the User domain entity and its contracts.
 
 **Deliverables:**
-- [ ] `modules/users/domain/` — `User` entity, `UserId` value object, domain exceptions (`UserNotFoundError`, `UserAlreadyExistsError`)
-- [ ] `modules/users/ports.py` — `UserRepository` ABC
-- [ ] `database/models/user.py` — SQLAlchemy `UserModel` (id UUID, email, password_hash, created_at, is_active)
-- [ ] First Alembic migration: `create_users_table`
-- [ ] `modules/users/infrastructure/` — `UserRepository` implementation
-- [ ] Unit tests: User entity creation, value object validation, domain exceptions
+- [x] `modules/users/domain/` — `User` entity, `UserId` value object, domain exceptions (`UserNotFoundError`, `UserAlreadyExistsError`)
+- [x] `modules/users/ports.py` — `UserRepository` ABC
+- [x] `database/models/user.py` — SQLAlchemy `UserModel` (id UUID, email, password_hash, created_at, is_active)
+- [x] First Alembic migration: `create_users_table`
+- [x] `modules/users/infrastructure/` — `UserRepository` implementation
+- [x] Unit tests: User entity creation, value object validation, domain exceptions
 
 **Constraints:**
 - Column: `password_hash`, never `password`
