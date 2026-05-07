@@ -14,8 +14,8 @@ RUN pip install .
 COPY vigil-tasks /app/vigil-tasks
 RUN pip install /app/vigil-tasks
 
-# COPY alembic/ alembic/
-# COPY alembic.ini .
+COPY alembic/ alembic/
+COPY alembic.ini .
 
 EXPOSE 8000
 
