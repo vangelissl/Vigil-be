@@ -16,15 +16,15 @@
 **Goal:** Set up the development environment and core configuration.
 
 **Deliverables:**
-- [ ] `pyproject.toml` with all dependencies (FastAPI, SQLAlchemy, Alembic, pydantic-settings, redis, celery, minio, argon2-cffi, python-jose)
-- [ ] Configure `[tool.ruff]` for linting
-- [ ] `.env.example` with all required variables — no real values
-- [ ] `docker-compose.yml` with PostgreSQL, Redis, MinIO, main app, and ML worker services
-- [ ] `Dockerfile` for the main app container
-- [ ] `ml-service/Dockerfile` for the ML worker container (separate base image, separate venv)
-- [ ] `vigil-tasks/` package scaffolded with its own `pyproject.toml` — installed in both containers
-- [ ] `core/config.py` — `Settings(BaseSettings)` loading from `.env`
-- [ ] Verify: `docker-compose up` starts all services and `main.py` runs
+- [x] `pyproject.toml` with all dependencies (FastAPI, SQLAlchemy, Alembic, pydantic-settings, redis, celery, minio, argon2-cffi, python-jose)
+- [x] Configure `[tool.ruff]` for linting
+- [x] `.env.example` with all required variables — no real values
+- [x] `docker-compose.yml` with PostgreSQL, Redis, MinIO, main app, and ML worker services
+- [x] `Dockerfile` for the main app container
+- [x] `ml-service/Dockerfile` for the ML worker container (separate base image, separate venv)
+- [x] `vigil-tasks/` package scaffolded with its own `pyproject.toml` — installed in both containers
+- [x] `core/config.py` — `Settings(BaseSettings)` loading from `.env`
+- [x] Verify: `docker-compose up` starts all services and `main.py` runs
 
 **References:**
 - [FastAPI docs](https://fastapi.tiangolo.com/)
@@ -37,10 +37,10 @@
 **Goal:** SQLAlchemy 2.0 async engine + Alembic migrations configured and working.
 
 **Deliverables:**
-- [ ] `database/session.py` — async engine + sessionmaker
-- [ ] `database/models/base.py` — `DeclarativeBase`
-- [ ] Alembic configured with async support (`alembic.ini`, `alembic/env.py`)
-- [ ] Verify: `alembic upgrade head` runs without errors on a clean DB
+- [x] `database/session.py` — async engine + sessionmaker
+- [x] `database/models/base.py` — `DeclarativeBase`
+- [x] Alembic configured with async support (`alembic.ini`, `alembic/env.py`)
+- [x] Verify: `alembic upgrade head` runs without errors on a clean DB
 
 **Constraints:**
 - Use `mapped_column()` syntax (SQLAlchemy 2.0)
@@ -56,11 +56,14 @@
 **Goal:** Redis connection and Celery app initialized in the main container; ML worker container configured to listen on a dedicated queue.
 
 **Deliverables:**
-- [ ] `database/redis/` — async Redis client (connection pool)
-- [ ] `workers/celery_app.py` — Celery app initialization in the main container, Redis as broker and result backend
-- [ ] `ml-service/worker/celery_app.py` — Celery worker init in the ML container, configured to listen on the `ml` queue only
-- [ ] Celery task routing configured: `run_inference` tasks always route to the `ml` queue
-- [ ] Verify: a test task dispatched from FastAPI is picked up and executed by the ML worker container
+- [x] `database/redis/` — async Redis client (connection pool)
+- [x] `workers/celery_app.py` — Celery app initialization in the main container, Redis as broker only (`task_ignore_result=True`)
+- [x] `vigil-tasks/` — shared task definitions package installed in both containers
+- [x] `ml-service/worker/celery_app.py` — Celery worker init in the ML container, configured to listen on the `ml` queue only
+- [x] Celery task routing configured: `run_inference` tasks always route to the `ml` queue
+- [x] Verify: a test task dispatched from FastAPI is picked up and executed by the ML worker container
+- [ ] `ml-service/worker/db.py` — deferred to Task 4.2 (requires Video and Analysis models)
+- [ ] `ml-service/worker/storage.py` — deferred to Task 4.2 (requires video upload path format)
 
 **References:**
 - [Celery with Redis](https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/redis.html)
@@ -73,9 +76,9 @@
 **Goal:** MinIO client configured and basic operations working.
 
 **Deliverables:**
-- [ ] MinIO service in `docker-compose.yml` with a default bucket
-- [ ] `database/` — MinIO client wrapper (upload, download, delete, presigned URL)
-- [ ] Verify: upload a test file via the client and retrieve it successfully
+- [x] MinIO service in `docker-compose.yml` with a default bucket
+- [x] `database/` — MinIO client wrapper (upload, download, delete, presigned URL)
+- [x] Verify: upload a test file via the client and retrieve it successfully
 
 **References:**
 - [MinIO Python SDK](https://min.io/docs/minio/linux/developers/python/API.html)
@@ -230,43 +233,46 @@
 
 ---
 
-### Task 4.2: ML Classifier Implementation
-**Goal:** Wire the MMAction2 inference pipeline behind the `MLClassifier` port.
+### Task 4.2: ML Service Infrastructure + Classifier Implementation
+**Goal:** Complete the ML worker's infrastructure clients and wire the MMAction2 inference pipeline.
 
 **Deliverables:**
-- [ ] `ml/config.py` — model config (checkpoint path, config path, device, labels)
-- [ ] `ml/recognizer.py` — model loader and wrapper
-- [ ] `ml/inference.py` — inference pipeline (preprocess → forward pass → postprocess)
-- [ ] `modules/analysis/infrastructure/` — `MMActionClassifier(MLClassifier)` implementation calling `ml/inference.py`
-- [ ] Unit tests: mock `MLClassifier` for use in application layer tests
+- [ ] `ml-service/worker/db.py` — sync psycopg2 client with two queries: fetch video minio_path by analysis_id, write result and update status
+- [ ] `ml-service/worker/storage.py` — MinIO client for downloading video to a temp file
+- [ ] `ml-service/worker/config.py` — model config (checkpoint path, mmaction2 config path, device, labels)
+- [ ] `ml-service/worker/recognizer.py` — model loader and wrapper
+- [ ] `ml-service/worker/inference.py` — inference pipeline (preprocess → forward pass → postprocess)
+- [ ] Unit tests: mock inference for use in task tests
 - [ ] Integration test: run inference on a short sample video, assert result shape is correct
 
 **Constraints:**
-- `MMActionClassifier` is the only place that imports from `ml/`
-- Application and domain layers must never import from `ml/` directly
+- `db.py` uses sync `psycopg2` — no async in Celery tasks
+- `storage.py` downloads to a temp file path, caller is responsible for cleanup
+- Inference code never imports from `src/vigil/` — fully isolated
 
 **References:**
 - [MMAction2 inference guide](https://mmaction2.readthedocs.io/en/latest/user_guides/inference.html)
+- [psycopg2 docs](https://www.psycopg.org/docs/)
 
 ---
 
 ### Task 4.3: Celery Analysis Task
-**Goal:** Async inference dispatched through Celery.
+**Goal:** Async inference dispatched through Celery, ML worker handles the full execution.
 
 **Deliverables:**
-- [ ] `workers/celery_app.py` — register analysis task
-- [ ] `modules/analysis/infrastructure/tasks.py` — Celery task implementation:
-  - Fetch video path via `VideoRepository` port
-  - Download video from MinIO to a temp file
-  - Call `MLClassifier.predict()`
-  - Write `ClassificationResult` to Postgres
+- [ ] `vigil_tasks/analysis.py` — full task implementation:
+  - Fetch video `minio_path` via `db.py`
+  - Download video from MinIO via `storage.py` to a temp file
+  - Run inference via `inference.py`
+  - Write `ClassificationResult` to Postgres via `db.py`
   - Update `AnalysisStatus` to `COMPLETED` or `FAILED`
-  - Clean up temp file after inference
+  - Clean up temp file
 - [ ] Integration test: dispatch task, assert DB status transitions correctly
 
 **Constraints:**
 - Always clean up the temp file — use `try/finally`
 - On any exception: set status to `FAILED`, log the error, do not crash the worker
+- Never import from `src/vigil/` inside the task
 
 ---
 
