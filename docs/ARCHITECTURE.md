@@ -59,7 +59,16 @@ The repository is organized as a monorepo with three top-level packages:
 ├── src/                          # Main FastAPI application
 │   └── vigil/
 │       ├── core/
-│       │   └── config.py         # Settings via pydantic-settings
+│       │   ├── config.py         # Settings via pydantic-settings
+|       |   ├── database/
+│       │   |   ├── session.py        # Async engine + sessionmaker
+│       │   |   └── models/           # SQLAlchemy ORM models
+│       │   │
+|       |   ├── redis/
+|       |   |   └── pool.py           # Redis connection pool
+│       │   │
+|       |   └── minio/
+|       |       └── client.py         # MiniO client
 │       │
 │       ├── modules/
 │       │   ├── auth/
@@ -96,9 +105,6 @@ The repository is organized as a monorepo with three top-level packages:
 │       │
 │       ├── shared/               # Shared utilities (base entities, pagination, etc.)
 │       │
-│       ├── database/
-│       │   ├── session.py        # Async engine + sessionmaker
-│       │   └── models/           # SQLAlchemy ORM models
 │       │
 │       └── workers/
 │           └── celery_app.py     # Celery app init — registers tasks from vigil-tasks
