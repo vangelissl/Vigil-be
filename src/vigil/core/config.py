@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # Database
-    database_url: str = "postgresql+asyncpg://whirly:whirly_secret@localhost:5432/whirly"
+    database_url: str = "postgresql+asyncpg://vigil:vigil_secret@localhost:5432/vigil"
 
     # Redis
     redis_url: str = "redis://localhost:6379/0"
@@ -17,11 +17,12 @@ class Settings(BaseSettings):
     minio_endpoint: str = "localhost:9000"
     minio_access_key: str = "minioadmin"
     minio_secret_key: str = "minioadmin"
-    minio_bucket: str = "whirly-media"
+    minio_bucket: str = "vigil-media"
     minio_secure: bool = False
 
     # Celery
     celery_broker_url: str = "redis://localhost:6379/1"
+    celery_beat_scheduler: str = "redis://localhost:6379/2"
 
     # App
     debug: bool = False
