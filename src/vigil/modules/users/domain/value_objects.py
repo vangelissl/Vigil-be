@@ -4,8 +4,8 @@ import uuid
 
 import re
 
-from vigil.shared.base import ValueObject
-from vigil.shared.exceptions import BusinessRuleValidationException
+from ....shared.base import ValueObject
+from ....shared.exceptions import BusinessRuleValidationException
 
 
 @dataclass(frozen=True)
