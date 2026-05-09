@@ -9,9 +9,12 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
 
     # JWT
-    jwt_secret_key: str = "CHANGE_ME"
     jwt_access_token_expire_minutes: int = 15
     jwt_refresh_token_expire_days: int = 7
+
+    # EdDSA
+    eddsa_private_key: str = "GENERATE_ME"
+    eddsa_public_key: str = "GENERATE_ME"
 
     # MinIO
     minio_endpoint: str = "localhost:9000"
