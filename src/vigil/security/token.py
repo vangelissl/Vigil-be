@@ -5,8 +5,6 @@ from cryptography.hazmat.primitives.serialization import (
     load_pem_public_key,
 )
 
-import base64
-
 import jwt
 import uuid
 from datetime import datetime, UTC, timedelta
