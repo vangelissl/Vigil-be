@@ -30,6 +30,8 @@ jobs:
 
     env:
       DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
+      EDDSA_PRIVATE_KEY: ${{secrets.EDDSA_PRIVATE_KEY}}
+      EDDSA_PUBLIC_KEY: ${{secrets.EDDSA_PUBLIC_KEY}}
 
     steps:
       - uses: actions/checkout@v4
