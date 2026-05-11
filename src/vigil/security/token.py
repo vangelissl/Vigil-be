@@ -1,5 +1,3 @@
-from fastapi import Depends
-
 from cryptography.hazmat.primitives.serialization import (
     load_pem_private_key,
     load_pem_public_key,
@@ -12,7 +10,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..core.config import settings
-from ..shared.crypto_exceptions import TokenExpiredError, TokenInvalidError, TokenMissingError
+from .exceptions import TokenExpiredError, TokenInvalidError, TokenMissingError
 
 @dataclass
 class TokenPayload:
@@ -112,7 +110,3 @@ class TokenService:
             raise TokenInvalidError()
         
         return payload
-    
-
-async def get_token_service() -> TokenService:
-    return TokenService()
