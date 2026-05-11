@@ -15,11 +15,11 @@ from .exceptions import TokenExpiredError, TokenInvalidError, TokenMissingError
 @dataclass
 class TokenPayload:
     sub: str
-    username: str | None = None
-    iat: int | None = None
-    jti: str | None = None
-    exp: int | None = None
-    type: str | None = None
+    username: str 
+    iat: int 
+    jti: str 
+    exp: int 
+    type: str 
 
     def to_dict(self):
         return {
@@ -34,16 +34,22 @@ class TokenPayload:
     @classmethod
     def from_dict(cls, payload: dict[str, Any]):
         sub = payload.get("sub")
-        if sub is None:
+        username = payload.get("username")
+        iat = payload.get("iat")
+        jti = payload.get("jti")
+        exp = payload.get("exp")
+        type = payload.get("type")
+
+        if not sub or not username or not iat or not jti or not exp or not type:
             raise jwt.InvalidTokenError("Missing 'sub'")
 
         return cls(
             sub=sub,
-            username=payload.get("username"),
-            iat=payload.get("iat"),
-            jti=payload.get("jti"),
-            exp=payload.get("exp"),
-            type=payload.get("type")
+            username=username,
+            iat=iat,
+            jti=jti,
+            exp=exp,
+            type=type
         )
 
 
@@ -63,27 +69,27 @@ class TokenService:
         self.access_lifespan_min = settings.jwt_access_token_expire_minutes
         self.refresh_lifespan_d = settings.jwt_refresh_token_expire_days
 
-    def _build_payload(self, payload: TokenPayload, delta: timedelta, token_type: str):
+    def _build_payload(self, id: uuid.UUID, username: str, delta: timedelta, token_type: str):
         now = datetime.now(UTC)
 
         return TokenPayload(
-            sub=payload.sub,
-            username=payload.username,
+            sub=str(id),
+            username=username,
             iat=int(now.timestamp()),
             exp=int((now + delta).timestamp()),
             jti=str(uuid.uuid4()),
             type=token_type
         )
 
-    def create_access_token(self, payload: TokenPayload) -> str:
-        full_payload = self._build_payload(payload, timedelta(minutes=self.access_lifespan_min), "access")
+    def create_access_token(self, id: uuid.UUID, username: str) -> str:
+        full_payload = self._build_payload(id, username, timedelta(minutes=self.access_lifespan_min), "access")
         return jwt.encode(
             full_payload.to_dict(), 
             self.private_key,  # type: ignore
             algorithm=self.algorithm)
 
-    def create_refresh_token(self, payload: TokenPayload) -> str:
-        full_payload = self._build_payload(payload, timedelta(days=self.refresh_lifespan_d), "refresh")
+    def create_refresh_token(self, id: uuid.UUID, username: str) -> str:
+        full_payload = self._build_payload(id, username, timedelta(days=self.refresh_lifespan_d), "refresh")
         return jwt.encode(
             full_payload.to_dict(), 
             self.private_key,  # type: ignore

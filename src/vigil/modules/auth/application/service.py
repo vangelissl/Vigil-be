@@ -23,19 +23,14 @@ class AuthService:
         self.redis = redis
 
     def _is_revoked(self, payload: TokenPayload) -> bool:
-        if payload.jti:
-            jti = payload.jti
-            return self.redis.get(jti) is not None
-        raise TokenError()
+        jti = payload.jti
+        return self.redis.get(jti) is not None
 
     def _revoke(self, payload: TokenPayload):
-        if payload.exp and payload.jti:
-            now = datetime.now(UTC)
-            expire_time = datetime.fromtimestamp(payload.exp, tz=UTC) 
-            ttl = expire_time - now
-            self.redis.set(payload.jti, payload.sub, ex=int(ttl.total_seconds()))
-            return
-        raise TokenError()
+        now = datetime.now(UTC)
+        expire_time = datetime.fromtimestamp(payload.exp, tz=UTC) 
+        ttl = expire_time - now
+        self.redis.set(payload.jti, payload.sub, ex=int(ttl.total_seconds()))
         
 
     def revoke_token(self, token: str):
@@ -52,21 +47,9 @@ class AuthService:
                 user.password, found_user.password_hash):
             raise InvalidCredentialsError()
 
-        access_payload = TokenPayload(
-            sub=str(found_user.id.value),
-            username=found_user.username.value,
-            type="access"
-        )
-
-        refresh_payload = TokenPayload(
-            sub=str(found_user.id.value),
-            username=found_user.username.value,
-            type="refresh"
-        )
-
-        access_token = self.token_service.create_access_token(access_payload)
+        access_token = self.token_service.create_access_token(found_user.id.value, found_user.username.value)
         refresh_token = self.token_service.create_refresh_token(
-            refresh_payload)
+            found_user.id.value, found_user.username.value)
 
         return TokenPairDTO(
             access_token,
@@ -82,20 +65,8 @@ class AuthService:
 
         self._revoke(refresh_payload)
 
-        new_access_payload = TokenPayload(
-            sub=refresh_payload.sub,
-            username=refresh_payload.username,
-            type="access"
-        )
-        new_refresh_payload = TokenPayload(
-            sub=refresh_payload.sub,
-            username=refresh_payload.username,
-            type="refresh"
-        )
-
-        new_access = self.token_service.create_access_token(new_access_payload)
-        new_refresh = self.token_service.create_refresh_token(
-            new_refresh_payload)
+        new_access = self.token_service.create_access_token(uuid.UUID(refresh_payload.sub), refresh_payload.username)
+        new_refresh = self.token_service.create_refresh_token(uuid.UUID(refresh_payload.sub), refresh_payload.username)
 
         return TokenPairDTO(new_access, new_refresh)
 
