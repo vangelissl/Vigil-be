@@ -11,11 +11,6 @@ class UserAlreadyExistsError(BusinessRuleException):
 		super().__init__(message)
 
 
-class InvalidCredentialsError(BusinessRuleException):
-	def __init__(self, message: str = "User not found"):
-		super().__init__(message)
-
-
 class EmailAlreadyTakenError(UserAlreadyExistsError):
 	def __init__(self, message: str = "User with this email already exists"):
 		super().__init__(message)
@@ -24,7 +19,3 @@ class EmailAlreadyTakenError(UserAlreadyExistsError):
 class UsernameAlreadyTakenError(UserAlreadyExistsError):
 	def __init__(self, message: str = "User with this username already exists"):
 		super().__init__(message)
-
-
-class InvalidCredentialsFormatError(BusinessRuleValidationException):
-    pass
