@@ -7,7 +7,7 @@ from .dto import UserDTO, UpdateUserDTO
 from .exceptions import WrongPasswordError
 
 from ..domain.exceptions import UserNotFoundError, EmailAlreadyTakenError, UsernameAlreadyTakenError
-from ..domain.value_objects import UserId, Username, Email
+from ..domain.value_objects import Username, Email
 
 
 class UserService:
@@ -42,11 +42,11 @@ class UserService:
             raise UsernameAlreadyTakenError()
 
         user.email = Email(
-            update_user.email) if update_user.email and update_user != user.email.value else user.email
+            update_user.email) if update_user.email and update_user.email != user.email.value else user.email
         user.username = Username(
-            update_user.username) if update_user.username and update_user != user.username.value else user.username
+            update_user.username) if update_user.username and update_user.username != user.username.value else user.username
 
         if update_user.new_password and update_user.new_password != update_user.password:
-            user.password_hash = self.hasher.hash(update_user.password)
+            user.password_hash = self.hasher.hash(update_user.new_password)
 
         await self.user_repo.update(id, user)
