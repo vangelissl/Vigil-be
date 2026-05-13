@@ -1,5 +1,3 @@
-from fastapi import Depends
-
 import uuid
 
 from sqlalchemy import select, or_
@@ -11,7 +9,6 @@ from ..domain.exceptions import EmailAlreadyTakenError, UserAlreadyExistsError, 
 from ..domain.value_objects import UserId, Username, Email
 from ..domain.entities import User
 
-from vigil.core.database.session import get_async_session
 from vigil.core.database.models.user import UserModel
 
 
@@ -107,9 +104,3 @@ class UserRepository(UserRepositoryProtocol):
 		await self.session.flush()
 		
 		return True
-	
-
-async def get_user_repository(
-	session: AsyncSession = Depends(get_async_session)
-) -> UserRepository:
-	return UserRepository(session)
