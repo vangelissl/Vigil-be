@@ -144,7 +144,10 @@ def hasher() -> MagicMock:
 
 @pytest.fixture
 def redis() -> MagicMock:
-     return MagicMock(spec=Redis)
+     redis = MagicMock()
+     redis.get = AsyncMock()
+
+     return redis
 
 
 # --- service ---

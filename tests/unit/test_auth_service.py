@@ -56,7 +56,8 @@ async def test_login_verifies_password_against_stored_hash(auth_service, user_re
 
     await auth_service.login(login_dto)
 
-    hasher.verify.assert_called_once_with(login_dto.password, domain_user.password_hash)
+    hasher.verify.assert_called_once_with(
+        login_dto.password, domain_user.password_hash)
 
 
 async def test_login_creates_access_and_refresh_tokens(auth_service, user_repository_mock, token_service, hasher, domain_user, login_dto):
@@ -152,7 +153,7 @@ async def test_refresh_token_success(auth_service, token_service, refresh_payloa
     token_service.create_refresh_token.return_value = "new_refresh_token"
     redis.get.return_value = None
 
-    result = auth_service.refresh_token("old_refresh_token")
+    result = await auth_service.refresh_token("old_refresh_token")
 
     assert isinstance(result, TokenPairDTO)
     assert result.access_token == "new_access_token"
@@ -164,7 +165,7 @@ async def test_refresh_token_revoked(auth_service, token_service, refresh_payloa
     redis.get.return_value = {}
 
     with pytest.raises(TokenRevokedError):
-        auth_service.refresh_token("revoked_refresh_token")
+        await auth_service.refresh_token("revoked_refresh_token")
 
 
 async def test_refresh_token_rotates(auth_service, token_service, refresh_payload, redis):
@@ -173,7 +174,7 @@ async def test_refresh_token_rotates(auth_service, token_service, refresh_payloa
     token_service.create_refresh_token.return_value = "new_refresh_token"
     redis.get.return_value = None
 
-    auth_service.refresh_token("old_refresh_token")
+    await auth_service.refresh_token("old_refresh_token")
 
     # old token must be revoked and new refresh token issued
     token_service.create_refresh_token.assert_called_once()
@@ -186,7 +187,7 @@ async def test_refresh_token_old_token_invalidated(auth_service, token_service, 
     redis.get.return_value = None
 
     with patch.object(auth_service, "_revoke") as mock_revoke:
-        auth_service.refresh_token("old_refresh_token")
+        await auth_service.refresh_token("old_refresh_token")
         mock_revoke.assert_called_once_with(refresh_payload)
 
 
@@ -196,7 +197,7 @@ async def test_verify_token_success(auth_service, token_service, access_payload,
     token_service.decode_token.return_value = access_payload
     redis.get.return_value = None
 
-    result = auth_service.verify_token("valid_token")
+    result = await auth_service.verify_token("valid_token")
 
     assert result == access_payload.sub
 
@@ -206,7 +207,7 @@ async def test_verify_token_revoked(auth_service, token_service, access_payload)
 
     with patch("json.load", return_value={access_payload.jti: access_payload.sub}):
         with pytest.raises(TokenRevokedError):
-            auth_service.verify_token("revoked_token")
+            await auth_service.verify_token("revoked_token")
 
 
 # --- logout ---
