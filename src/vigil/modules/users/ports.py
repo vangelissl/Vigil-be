@@ -10,15 +10,15 @@ class UserRepositoryProtocol(ABC):
     async def create(self, user: User) -> User:
         pass
     @abstractmethod
-    async def get(self, user_id: uuid.UUID) -> User:
+    async def get(self, user_id: uuid.UUID) -> User | None:
         pass
 
     @abstractmethod
-    async def get_by_email(self, email: str) -> User:
+    async def get_by_email(self, email: str) -> User | None:
         pass
 
     @abstractmethod
-    async def get_by_username(self, username: str) -> User:
+    async def get_by_username(self, username: str) -> User | None:
         pass
 
     @abstractmethod

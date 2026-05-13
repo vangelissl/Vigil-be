@@ -64,8 +64,9 @@ async def test_user_delete(user_repository):
 
 
 async def test_non_existing_user_get(user_repository):
-    with pytest.raises(UserNotFoundError):
-        await user_repository.get(uuid.uuid4())
+    user = await user_repository.get(uuid.uuid4())
+    
+    assert user is None
 
 
 async def test_user_get_by_email(user_repository):

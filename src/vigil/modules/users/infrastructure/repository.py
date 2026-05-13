@@ -55,26 +55,20 @@ class UserRepository(UserRepositoryProtocol):
 				raise UsernameAlreadyTakenError()
 			raise UserAlreadyExistsError()
 	
-	async def get(self, user_id: uuid.UUID) -> User:
+	async def get(self, user_id: uuid.UUID) -> User | None:
 		user = await self.session.get(UserModel, user_id)
 		
-		if not user:
-			raise UserNotFoundError("user not found")
-		return self._to_domain(user)
+		return self._to_domain(user) if user else None
 	
-	async def get_by_email(self, email: str) -> User:
+	async def get_by_email(self, email: str) -> User | None:
 		user = (await self.session.execute(select(UserModel).where(UserModel.email == email))).scalar()
-		if not user:
-			raise UserNotFoundError("user not found")
 		
-		return self._to_domain(user)
+		return self._to_domain(user) if user else None
 	
-	async def get_by_username(self, username: str) -> User:
+	async def get_by_username(self, username: str) -> User | None:
 		user = (await self.session.execute(select(UserModel).where(UserModel.username == username))).scalar()
-		if not user:
-			raise UserNotFoundError("user with this username not found")
 		
-		return self._to_domain(user)
+		return self._to_domain(user) if user else None
 	
 	async def get_all(self, limit: int = 50, offset: int = 0) -> list[User]:
 		models = (await self.session.scalars(
