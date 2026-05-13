@@ -1,11 +1,12 @@
 import os
-from datetime import datetime, UTC
 from dotenv import load_dotenv
 import pytest
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from httpx import AsyncClient, ASGITransport
 
 from src.vigil.core.database.base import Base
+from vigil.core.database.session import AsyncSession, get_async_session, create_async_engine
 from src.vigil.modules.users.infrastructure.repository import UserRepository
+from vigil.main import app
 
 
 load_dotenv()
@@ -37,6 +38,15 @@ def user_repository(session):
 	yield repository
 
 	repository = None
+     
+
+@pytest.fixture(scope="function")
+async def client(session):
+	app.dependency_overrides[get_async_session] = lambda: session
+	async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+		yield c
+	app.dependency_overrides.clear()
+      
 
 import uuid
 import pytest
@@ -147,3 +157,30 @@ def auth_service(user_repository_mock, token_service, hasher, redis) -> AuthServ
         hasher=hasher,
         redis=redis
     )
+
+from vigil.modules.auth.dependencies import get_auth_service
+
+
+@pytest.fixture
+def fake_tokens():
+      return TokenPairDTO(
+    access_token="fake_access_token",
+    refresh_token="fake_refresh_token"
+)
+
+@pytest.fixture
+def mock_auth_service(fake_tokens):
+    service = MagicMock()
+    service.register = AsyncMock(return_value=fake_tokens)
+    service.login = AsyncMock(return_value=fake_tokens)
+    service.refresh_token = AsyncMock(return_value=fake_tokens)
+    service.logout = MagicMock()
+    return service
+
+
+@pytest.fixture
+def client_with_mock_auth(client, mock_auth_service):
+    from vigil.main import app
+    app.dependency_overrides[get_auth_service] = lambda: mock_auth_service
+    yield client
+    app.dependency_overrides.pop(get_auth_service, None)
