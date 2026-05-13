@@ -1,10 +1,12 @@
 import os
 from dotenv import load_dotenv
 import pytest
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from httpx import AsyncClient, ASGITransport
 
 from src.vigil.core.database.base import Base
+from vigil.core.database.session import AsyncSession, get_async_session, create_async_engine
 from src.vigil.modules.users.infrastructure.repository import UserRepository
+from vigil.main import app
 
 
 load_dotenv()
@@ -36,3 +38,152 @@ def user_repository(session):
 	yield repository
 
 	repository = None
+     
+
+@pytest.fixture(scope="function")
+async def client(session):
+	app.dependency_overrides[get_async_session] = lambda: session
+	async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+		yield c
+	app.dependency_overrides.clear()
+      
+
+import uuid
+import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
+
+from vigil.security.token import TokenService, TokenPayload
+from vigil.security.hashing import PasswordHasher
+
+from vigil.modules.auth.application.service import AuthService
+from vigil.modules.auth.application.dto import LoginDTO, RegisterDTO, TokenPairDTO
+from vigil.modules.auth.domain.exceptions import ConfirmPasswordMismatchError, TokenRevokedError
+
+from vigil.modules.users.ports import UserRepositoryProtocol
+from vigil.modules.users.domain.exceptions import UserNotFoundError
+from vigil.modules.users.domain.entities import User
+from vigil.modules.users.domain.value_objects import UserId, Email, Username
+
+from vigil.core.dependencies import Redis
+
+# --- value fixtures ---
+
+@pytest.fixture
+def user_id() -> uuid.UUID:
+    return uuid.uuid4()
+
+@pytest.fixture
+def username() -> str:
+     return "testuser"
+
+
+@pytest.fixture
+def domain_user(user_id) -> User:
+    return User(
+        id=UserId(user_id),
+        email=Email("test@example.com"),
+        username=Username("testuser"),
+        password_hash="hashed_password",
+    )
+
+
+@pytest.fixture
+def login_dto() -> LoginDTO:
+    return LoginDTO(email="test@example.com", password="plainpassword")
+
+
+@pytest.fixture
+def register_dto() -> RegisterDTO:
+    return RegisterDTO(
+        email="test@example.com",
+        username="testuser",
+        password="plainpassword",
+        confirm_password="plainpassword"
+    )
+
+
+@pytest.fixture
+def access_payload(user_id, username) -> TokenPayload:
+    return TokenPayload(
+        sub=str(user_id),
+        username=username,
+        jti=str(uuid.uuid4()),
+        iat=0,
+        exp=0,
+        type="access"
+    )
+
+
+@pytest.fixture
+def refresh_payload(user_id, username) -> TokenPayload:
+    return TokenPayload(
+        sub=str(user_id),
+        username=username,
+        jti=str(uuid.uuid4()),
+        iat=0,
+        exp=0,
+        type="refresh"
+    )
+
+
+# --- mock dependencies ---
+
+@pytest.fixture
+def user_repository_mock() -> AsyncMock:
+    return AsyncMock(spec=UserRepositoryProtocol)
+
+
+@pytest.fixture
+def token_service() -> MagicMock:
+    return MagicMock(spec=TokenService)
+
+
+@pytest.fixture
+def hasher() -> MagicMock:
+    return MagicMock(spec=PasswordHasher)
+
+@pytest.fixture
+def redis() -> MagicMock:
+     redis = MagicMock()
+     redis.get = AsyncMock()
+
+     return redis
+
+
+# --- service ---
+
+@pytest.fixture
+def auth_service(user_repository_mock, token_service, hasher, redis) -> AuthService:
+    return AuthService(
+        user_repository=user_repository_mock,
+        token_service=token_service,
+        hasher=hasher,
+        redis=redis
+    )
+
+from vigil.modules.auth.dependencies import get_auth_service
+
+
+@pytest.fixture
+def fake_tokens():
+      return TokenPairDTO(
+    access_token="fake_access_token",
+    refresh_token="fake_refresh_token"
+)
+
+@pytest.fixture
+def mock_auth_service(fake_tokens):
+    service = MagicMock()
+    service.register = AsyncMock(return_value=fake_tokens)
+    service.login = AsyncMock(return_value=fake_tokens)
+    service.refresh_token = AsyncMock(return_value=fake_tokens)
+    service.logout = MagicMock()
+    return service
+
+
+@pytest.fixture
+def client_with_mock_auth(client, mock_auth_service):
+    from vigil.main import app
+    app.dependency_overrides[get_auth_service] = lambda: mock_auth_service
+    yield client
+    app.dependency_overrides.pop(get_auth_service, None)

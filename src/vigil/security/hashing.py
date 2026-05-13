@@ -35,7 +35,3 @@ class PasswordHasher:
 		
 		except VerifyMismatchError:
 			return False
-		
-
-async def get_hasher():
-	return PasswordHasher()
