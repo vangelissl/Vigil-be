@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, UTC
 
 from .dto import LoginDTO, RegisterDTO, TokenPairDTO
-from ..domain.exceptions import TokenRevokedError, ConfirmPasswordMismatchError, TokenError, InvalidCredentialsError
+from ..domain.exceptions import TokenRevokedError, ConfirmPasswordMismatchError, InvalidCredentialsError
 
 from ....security.exceptions import TokenExpiredError
 from ....security.token import TokenService, TokenPayload
@@ -22,9 +22,9 @@ class AuthService:
         self.hasher = hasher
         self.redis = redis
 
-    def _is_revoked(self, payload: TokenPayload) -> bool:
+    async def _is_revoked(self, payload: TokenPayload) -> bool:
         jti = payload.jti
-        return self.redis.get(jti) is not None
+        return await self.redis.get(jti) is not None
 
     def _revoke(self, payload: TokenPayload):
         now = datetime.now(UTC)
@@ -56,11 +56,11 @@ class AuthService:
             refresh_token
         )
 
-    def refresh_token(self, refresh_token: str) -> TokenPairDTO:
+    async def refresh_token(self, refresh_token: str) -> TokenPairDTO:
         refresh_payload = self.token_service.decode_refresh_token(
             refresh_token)
 
-        if self._is_revoked(refresh_payload):
+        if await self._is_revoked(refresh_payload):
             raise TokenRevokedError()
 
         self._revoke(refresh_payload)
@@ -85,10 +85,10 @@ class AuthService:
         return await self.login(LoginDTO(user.email, user.password))
 
 
-    def verify_token(self, token: str):
+    async def verify_token(self, token: str):
         payload = self.token_service.decode_token(token)
 
-        if self._is_revoked(payload):
+        if await self._is_revoked(payload):
             raise TokenRevokedError()
 
         return payload.sub
