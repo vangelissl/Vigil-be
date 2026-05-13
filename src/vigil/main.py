@@ -8,6 +8,8 @@ from vigil.core.minio.client import upload_file
 from vigil.modules.auth.presentation.api.v1.router import router as auth_router
 from vigil.modules.auth.presentation.exception_handlers import register_exception_handlers as register_auth_handlers
 
+from vigil.modules.users.presentation.api.v1.router import router as users_router
+
 def create_app() -> FastAPI:
     application = FastAPI(
         title="Vigil System",
@@ -41,6 +43,7 @@ def create_app() -> FastAPI:
         return {"status": "uploaded"}
     
     application.include_router(auth_router)
+    application.include_router(users_router)
 
     return application
 
