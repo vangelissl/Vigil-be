@@ -2,6 +2,8 @@ from fastapi import Depends, Cookie, HTTPException
 
 from typing import Annotated
 
+import uuid
+
 from ..shared.dto import CurrentUserDTO
 from .token import TokenService
 from .hashing import PasswordHasher
@@ -19,7 +21,7 @@ async def get_current_user(
 	user = service.decode_refresh_token(refresh_token)
 	
 	return CurrentUserDTO(
-		id=user.sub,
+		id=uuid.UUID(user.sub),
 		username=user.username
 	)
 

@@ -1,7 +1,8 @@
 from dataclasses import dataclass
+import uuid
 
 
 @dataclass
 class CurrentUserDTO:
-    id: str
+    id: uuid.UUID
     username: str | None
