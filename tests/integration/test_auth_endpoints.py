@@ -1,8 +1,6 @@
 import pytest
 from fastapi import status
-from unittest.mock import patch, MagicMock, AsyncMock
 
-from vigil.modules.auth.application.dto import TokenPairDTO
 from vigil.modules.auth.domain.exceptions import ConfirmPasswordMismatchError, TokenRevokedError
 from vigil.modules.users.domain.exceptions import (
     UserNotFoundError,

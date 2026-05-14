@@ -1,3 +1,18 @@
+from vigil.modules.auth.dependencies import get_auth_service
+from vigil.modules.users.dependencies import get_user_service
+from vigil.core.dependencies import Redis
+from vigil.modules.users.application.service import UserService
+from vigil.modules.users.domain.value_objects import UserId, Email, Username
+from vigil.modules.users.domain.entities import User
+from vigil.modules.users.domain.exceptions import UserNotFoundError
+from vigil.modules.users.ports import UserRepositoryProtocol
+from vigil.modules.auth.domain.exceptions import ConfirmPasswordMismatchError, TokenRevokedError
+from vigil.modules.auth.application.dto import LoginDTO, RegisterDTO, TokenPairDTO
+from vigil.modules.auth.application.service import AuthService
+from vigil.security.hashing import PasswordHasher
+from vigil.security.token import TokenService, TokenPayload
+from unittest.mock import AsyncMock, MagicMock, patch
+import uuid
 import os
 from dotenv import load_dotenv
 import pytest
@@ -10,79 +25,70 @@ from vigil.main import app
 
 
 load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://test:test@localhost/test_db")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql+asyncpg://test:test@localhost/test_db")
 
 
 @pytest.fixture(scope="function")
 async def engine():
-	engine = create_async_engine(DATABASE_URL)
-	async with engine.begin() as conn:
-		await conn.run_sync(Base.metadata.create_all)
-		yield engine
-		await engine.dispose()
+    engine = create_async_engine(DATABASE_URL)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+        yield engine
+        await engine.dispose()
 
 
 @pytest.fixture(scope="function")
 async def session(engine):
-	async with engine.connect() as conn:
-		await conn.begin()
-		await conn.begin_nested()
-		async with AsyncSession(bind=conn) as s:
-			yield s
-		await conn.rollback()
+    async with engine.connect() as conn:
+        await conn.begin()
+        await conn.begin_nested()
+        async with AsyncSession(bind=conn) as s:
+            yield s
+        await conn.rollback()
+
 
 @pytest.fixture(scope="function")
 def user_repository(session):
-	repository = UserRepository(session)
+    repository = UserRepository(session)
 
-	yield repository
+    yield repository
 
-	repository = None
-     
+    repository = None
+
 
 @pytest.fixture(scope="function")
 async def client(session):
-	app.dependency_overrides[get_async_session] = lambda: session
-	async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-		yield c
-	app.dependency_overrides.clear()
-      
+    app.dependency_overrides[get_async_session] = lambda: session
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        yield c
+    app.dependency_overrides.clear()
 
-import uuid
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-
-from vigil.security.token import TokenService, TokenPayload
-from vigil.security.hashing import PasswordHasher
-
-from vigil.modules.auth.application.service import AuthService
-from vigil.modules.auth.application.dto import LoginDTO, RegisterDTO, TokenPairDTO
-from vigil.modules.auth.domain.exceptions import ConfirmPasswordMismatchError, TokenRevokedError
-
-from vigil.modules.users.ports import UserRepositoryProtocol
-from vigil.modules.users.domain.exceptions import UserNotFoundError
-from vigil.modules.users.domain.entities import User
-from vigil.modules.users.domain.value_objects import UserId, Email, Username
-
-from vigil.core.dependencies import Redis
 
 # --- value fixtures ---
+
 
 @pytest.fixture
 def user_id() -> uuid.UUID:
     return uuid.uuid4()
 
+
 @pytest.fixture
 def username() -> str:
-     return "testuser"
+    return "testuser"
 
 
 @pytest.fixture
-def domain_user(user_id) -> User:
+def email() -> str:
+    return "test@example.com"
+
+
+@pytest.fixture
+def domain_user(user_id, username, email) -> User:
     return User(
         id=UserId(user_id),
-        email=Email("test@example.com"),
-        username=Username("testuser"),
+        email=Email(email),
+        username=Username(username),
         password_hash="hashed_password",
     )
 
@@ -93,10 +99,10 @@ def login_dto() -> LoginDTO:
 
 
 @pytest.fixture
-def register_dto() -> RegisterDTO:
+def register_dto(username, email) -> RegisterDTO:
     return RegisterDTO(
-        email="test@example.com",
-        username="testuser",
+        email=email,
+        username=username,
         password="plainpassword",
         confirm_password="plainpassword"
     )
@@ -142,12 +148,13 @@ def token_service() -> MagicMock:
 def hasher() -> MagicMock:
     return MagicMock(spec=PasswordHasher)
 
+
 @pytest.fixture
 def redis() -> MagicMock:
-     redis = MagicMock()
-     redis.get = AsyncMock()
+    redis = MagicMock()
+    redis.get = AsyncMock()
 
-     return redis
+    return redis
 
 
 # --- service ---
@@ -161,15 +168,22 @@ def auth_service(user_repository_mock, token_service, hasher, redis) -> AuthServ
         redis=redis
     )
 
-from vigil.modules.auth.dependencies import get_auth_service
+
+@pytest.fixture
+def user_service(user_repository_mock, hasher) -> UserService:
+    return UserService(
+        user_repo=user_repository_mock,
+        hasher=hasher
+    )
 
 
 @pytest.fixture
 def fake_tokens():
-      return TokenPairDTO(
-    access_token="fake_access_token",
-    refresh_token="fake_refresh_token"
-)
+    return TokenPairDTO(
+        access_token="fake_access_token",
+        refresh_token="fake_refresh_token"
+    )
+
 
 @pytest.fixture
 def mock_auth_service(fake_tokens):
@@ -187,3 +201,30 @@ def client_with_mock_auth(client, mock_auth_service):
     app.dependency_overrides[get_auth_service] = lambda: mock_auth_service
     yield client
     app.dependency_overrides.pop(get_auth_service, None)
+
+
+@pytest.fixture
+def mock_user_service():
+    service = MagicMock()
+    service.get_current_user_profile = AsyncMock()
+    service.update_current_user_profile = AsyncMock()
+    return service
+
+
+@pytest.fixture
+def mock_current_user(user_id, username):
+    from vigil.shared.dto import CurrentUserDTO
+    return CurrentUserDTO(id=user_id, username=username)
+
+
+@pytest.fixture
+def client_with_user_service(client, mock_user_service, mock_current_user):
+    from vigil.main import app
+    from vigil.modules.users.dependencies import get_user_service
+    from vigil.security.dependencies import get_current_user
+    
+    app.dependency_overrides[get_user_service] = lambda: mock_user_service
+    app.dependency_overrides[get_current_user] = lambda: mock_current_user
+    yield mock_user_service, client
+    app.dependency_overrides.pop(get_user_service, None)
+    app.dependency_overrides.pop(get_current_user, None)
