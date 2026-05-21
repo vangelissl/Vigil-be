@@ -1,11 +1,10 @@
 import pytest
 from fastapi import status
 from vigil.modules.users.domain.exceptions import (
-    UserNotFoundError,
     EmailAlreadyTakenError,
     UsernameAlreadyTakenError
 )
-from vigil.modules.users.application.exceptions import WrongPasswordError
+from vigil.modules.users.application.exceptions import WrongPasswordError, UnauthorizedUserError
 from vigil.modules.users.application.dto import UserDTO
 
 
@@ -63,7 +62,7 @@ class TestGetMe:
     async def test_get_me_user_not_found(self, client_with_user_service):
         """Should return 401 when user not found"""
         mock_service, client = client_with_user_service
-        mock_service.get_current_user_profile.side_effect = UserNotFoundError()
+        mock_service.get_current_user_profile.side_effect = UnauthorizedUserError()
 
         response = await client.get(GET_ME_URL)
 
@@ -161,21 +160,20 @@ class TestPatchMe:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.content) == 0
 
-    # async def test_patch_me_wrong_password(self, client_with_user_service):
-    #     """Should return 406 when password is incorrect"""
-    #     mock_service, client = client_with_user_service
-    #     # Use side_effect for AsyncMock properly
-    #     async def raise_error(*args, **kwargs):
-    #         raise WrongPasswordError()
-    #     mock_service.update_current_user_profile.side_effect = raise_error
+    async def test_patch_me_wrong_password(self, client_with_user_service):
+        """Should return 406 when password is incorrect"""
+        mock_service, client = client_with_user_service
+        async def raise_error(*args, **kwargs):
+            raise WrongPasswordError()
+        mock_service.update_current_user_profile.side_effect = raise_error
 
-    #     response = await client.patch(
-    #         PATCH_ME_URL,
-    #         json=VALID_UPDATE_BODY
-    #     )
+        response = await client.patch(
+            PATCH_ME_URL,
+            json=VALID_UPDATE_BODY
+        )
 
-    #     assert response.status_code == status.HTTP_406_NOT_ACCEPTABLE
-    #     assert "Wrong password" in response.json()["detail"]
+        assert response.status_code == status.HTTP_406_NOT_ACCEPTABLE
+        assert "Wrong password" in response.json()["detail"]
 
     async def test_patch_me_email_already_taken(self, client_with_user_service):
         """Should return 400 when email is already taken"""
@@ -211,7 +209,7 @@ class TestPatchMe:
         """Should return 401 when user not found"""
         mock_service, client = client_with_user_service
         async def raise_error(*args, **kwargs):
-            raise UserNotFoundError()
+            raise UnauthorizedUserError()
         mock_service.update_current_user_profile.side_effect = raise_error
 
         response = await client.patch(
