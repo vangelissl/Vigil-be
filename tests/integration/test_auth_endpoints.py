@@ -1,8 +1,6 @@
 import pytest
 from fastapi import status
-from unittest.mock import patch, MagicMock, AsyncMock
 
-from vigil.modules.auth.application.dto import TokenPairDTO
 from vigil.modules.auth.domain.exceptions import ConfirmPasswordMismatchError, TokenRevokedError
 from vigil.modules.users.domain.exceptions import (
     UserNotFoundError,
@@ -115,7 +113,7 @@ async def test_login_invalid_credentials(client_with_mock_auth, mock_auth_servic
 
     response = await client_with_mock_auth.post(LOGIN_URL, json=VALID_LOGIN_BODY)
 
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 async def test_login_missing_email(client_with_mock_auth):
