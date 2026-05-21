@@ -11,6 +11,7 @@ from ....security.hashing import PasswordHasher
 from ...users.ports import UserRepositoryProtocol
 from ...users.domain.entities import User
 from ...users.domain.value_objects import UserId, Email, Username
+from ...users.domain.exceptions import UserNotFoundError
 
 from ....core.dependencies import Redis
 
@@ -42,6 +43,9 @@ class AuthService:
 
     async def login(self, user: LoginDTO) -> TokenPairDTO:
         found_user = await self.user_repository.get_by_email(user.email)
+
+        if not found_user:
+            raise UserNotFoundError()
 
         if not self.hasher.verify(
                 user.password, found_user.password_hash):
