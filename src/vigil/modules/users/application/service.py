@@ -4,9 +4,9 @@ from ....security.dependencies import PasswordHasher
 
 from ..ports import UserRepositoryProtocol
 from .dto import UserDTO, UpdateUserDTO
-from .exceptions import WrongPasswordError
+from .exceptions import WrongPasswordError, UnauthorizedUserError
 
-from ..domain.exceptions import UserNotFoundError, EmailAlreadyTakenError, UsernameAlreadyTakenError
+from ..domain.exceptions import EmailAlreadyTakenError, UsernameAlreadyTakenError
 from ..domain.value_objects import Username, Email
 
 
@@ -19,7 +19,7 @@ class UserService:
         user = await self.user_repo.get(id)
 
         if not user:
-            raise UserNotFoundError()
+            raise UnauthorizedUserError()
 
         return UserDTO(
             email=user.email.value,
@@ -30,7 +30,7 @@ class UserService:
         user = await self.user_repo.get(id)
 
         if not user:
-            raise UserNotFoundError()
+            raise UnauthorizedUserError()
 
         if not self.hasher.verify(update_user.password, user.password_hash):
             raise WrongPasswordError()
