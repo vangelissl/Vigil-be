@@ -1,14 +1,13 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from ..domain.exceptions import UserNotFoundError, EmailAlreadyTakenError, UsernameAlreadyTakenError
-from ..application.exceptions import WrongPasswordError
+from ..application.exceptions import WrongPasswordError, UnauthorizedUserError
 
 
 def register_exception_handler(app: FastAPI):
 
-    @app.exception_handler(UserNotFoundError)
-    async def user_not_found_handler(request: Request, exc: UserNotFoundError):
+    @app.exception_handler(UnauthorizedUserError)
+    async def unauthorized_user_handler(request: Request, exc: UnauthorizedUserError):
         return JSONResponse(
             status_code=status.HTTP_401_UNAUTHORIZED,
             content={"detail": "Unauthorized user. Access denied"}
@@ -19,18 +18,4 @@ def register_exception_handler(app: FastAPI):
         return JSONResponse(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
             content={"detail": "Wrong password. Action denied"}
-        )
-
-    @app.exception_handler(EmailAlreadyTakenError)
-    async def email_already_taken_handler(request: Request, exc: EmailAlreadyTakenError):
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={"detail": "User with this email already exists"}
-        )
-
-    @app.exception_handler(UsernameAlreadyTakenError)
-    async def username_already_taken_handler(request: Request, exc: UsernameAlreadyTakenError):
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={"detail": "User with this username already exists"}
         )
