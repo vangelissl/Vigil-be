@@ -18,6 +18,7 @@ class VideoStatus(Enum):
     UPLOADED = "uploaded"
     READY = "ready"
     PROCESSING = "processing"
+    COMPLETED = "completed"
     FAILED = "failed"
 
 
