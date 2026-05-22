@@ -1,17 +1,49 @@
 from dataclasses import dataclass
 
+from pathlib import Path
 import uuid
 
 from ....shared.base import ValueObject
+from ....shared.exceptions import BusinessRuleValidationException
 
 from enum import Enum
 
 
 @dataclass(frozen=True)
 class VideoId(ValueObject):
-	value: uuid.UUID
+    value: uuid.UUID
 
 
 class VideoStatus(Enum):
-	UPLOADED = 0
-	READY = 1
+    UPLOADED = "uploaded"
+    READY = "ready"
+    PROCESSING = "processing"
+    FAILED = "failed"
+
+
+ALLOWED_EXTENSIONS = {".mp4", ".avi"}
+
+
+@dataclass(frozen=True)
+class Filename(ValueObject):
+    value: str
+
+    def __post_init__(self):
+        if not self.value:
+            raise BusinessRuleValidationException("Filename cannot be empty")
+        ext = Path(self.value).suffix.lower()
+        if ext not in ALLOWED_EXTENSIONS:
+            raise BusinessRuleValidationException(
+                f"File type not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}")
+
+
+@dataclass(frozen=True)
+class SizeBytes(ValueObject):
+    value: int
+
+    def __post_init__(self):
+        if self.value <= 0:
+            raise BusinessRuleValidationException("File size is too small")
+        elif self.value > 1_000_000_000:
+            raise BusinessRuleValidationException(
+                "File size is too big. It must be <= 1GB")
