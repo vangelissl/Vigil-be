@@ -10,6 +10,7 @@ from alembic import context
 from src.vigil.core.config import settings
 from src.vigil.core.database.base import Base
 from src.vigil.core.database.models.user import UserModel  # noqa: F401
+from src.vigil.core.database.models.video import VideoModel  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
