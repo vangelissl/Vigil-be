@@ -15,6 +15,10 @@ class VideoRepositoryProtocol(ABC):
         pass
 
     @abstractmethod
+    async def get_all_by_owner(self, owner_id: uuid.UUID) -> list[Video]:
+        pass
+
+    @abstractmethod
     async def get_all(self, limit: int = 50, offset: int = 0) -> list[Video]:
         pass
 
