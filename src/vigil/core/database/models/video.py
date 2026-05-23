@@ -1,3 +1,8 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .user import UserModel
+
 from datetime import UTC, datetime
 
 import uuid
