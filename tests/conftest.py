@@ -21,6 +21,9 @@ from httpx import AsyncClient, ASGITransport
 from src.vigil.core.database.base import Base
 from vigil.core.database.session import AsyncSession, get_async_session, create_async_engine
 from src.vigil.modules.users.infrastructure.repository import UserRepository
+
+from vigil.modules.videos.domain.entities import Video, VideoId, VideoStatus, SizeBytes, Filename
+from vigil.modules.videos.infrastructure.repository import VideoRepository
 from vigil.main import app
 
 
@@ -55,6 +58,37 @@ def user_repository(session):
     yield repository
 
     repository = None
+
+
+@pytest.fixture(scope="function")
+def video_repository(session):
+    repository = VideoRepository(session)
+    yield repository
+    repository = None
+
+
+@pytest.fixture
+async def owner(user_repository):
+    user = User(
+        id=UserId(uuid.uuid4()),
+        email=Email("owner@example.com"),
+        username=Username("owner"),
+        password_hash="hashed"
+    )
+    await user_repository.create(user)
+    return user
+
+
+@pytest.fixture
+def video(owner):
+    return Video(
+        id=VideoId(uuid.uuid4()),
+        owner_id=owner.id,
+        filename=Filename("file.avi"),
+        size_bytes=SizeBytes(153),
+        status=VideoStatus.UPLOADED,
+        minio_path="uri"
+    )
 
 
 @pytest.fixture(scope="function")

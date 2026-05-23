@@ -12,7 +12,7 @@ from ..domain.entities import Video, UserId
 from vigil.core.database.models.video import VideoModel
 
 
-class UserRepository(VideoRepositoryProtocol):
+class VideoRepository(VideoRepositoryProtocol):
 
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -30,11 +30,11 @@ class UserRepository(VideoRepositoryProtocol):
     def _to_model(self, video: Video) -> VideoModel:
         return VideoModel(
             id=video.id.value,
-            owner_id=video.owner_id,
-            filename=video.filename,
+            owner_id=video.owner_id.value,
+            filename=video.filename.value,
             minio_path=video.minio_path,
             status=video.status,
-            size_bytes=video.size_bytes
+            size_bytes=video.size_bytes.value
         )
 
     async def create(self, video: Video) -> Video:
