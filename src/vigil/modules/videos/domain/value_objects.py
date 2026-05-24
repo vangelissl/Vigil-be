@@ -4,7 +4,8 @@ from pathlib import Path
 import uuid
 
 from ....shared.base import ValueObject
-from ....shared.exceptions import BusinessRuleValidationException
+
+from .exceptions import FileEmptyError, WrongFileExtensionError, VideoSizeTooBigError, VideoSizeTooSmallError
 
 from enum import Enum
 
@@ -31,10 +32,10 @@ class Filename(ValueObject):
 
     def __post_init__(self):
         if not self.value:
-            raise BusinessRuleValidationException("Filename cannot be empty")
+            raise FileEmptyError("Filename cannot be empty")
         ext = Path(self.value).suffix.lower()
         if ext not in ALLOWED_EXTENSIONS:
-            raise BusinessRuleValidationException(
+            raise WrongFileExtensionError(
                 f"File type not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}")
 
 
@@ -44,7 +45,7 @@ class SizeBytes(ValueObject):
 
     def __post_init__(self):
         if self.value <= 0:
-            raise BusinessRuleValidationException("File size is too small")
+            raise VideoSizeTooSmallError("File size is too small")
         elif self.value > 1_000_000_000:
-            raise BusinessRuleValidationException(
+            raise VideoSizeTooBigError(
                 "File size is too big. It must be <= 1GB")
