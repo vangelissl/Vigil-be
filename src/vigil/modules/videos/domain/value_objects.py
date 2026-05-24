@@ -5,7 +5,7 @@ import uuid
 
 from ....shared.base import ValueObject
 
-from .exceptions import FileEmptyError, WrongFileExtensionError, VideoSizeTooBigError, VideoSizeTooSmallError
+from .exceptions import FileEmptyError, WrongFileExtensionError, FileTooLargeError, FileTooSmallError
 
 from enum import Enum
 
@@ -23,7 +23,7 @@ class VideoStatus(Enum):
     FAILED = "failed"
 
 
-ALLOWED_EXTENSIONS = {".mp4", ".avi"}
+ALLOWED_EXTENSIONS = {".mp4", ".avi", ".mov"}
 
 
 @dataclass(frozen=True)
@@ -45,7 +45,7 @@ class SizeBytes(ValueObject):
 
     def __post_init__(self):
         if self.value <= 0:
-            raise VideoSizeTooSmallError("File size is too small")
+            raise FileTooSmallError("File size is too small")
         elif self.value > 1_000_000_000:
-            raise VideoSizeTooBigError(
+            raise FileTooLargeError(
                 "File size is too big. It must be <= 1GB")
