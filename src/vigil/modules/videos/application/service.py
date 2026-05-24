@@ -6,7 +6,7 @@ from ....core.dependencies import MinioStorage
 
 from ..ports import VideoRepositoryProtocol
 
-from .exceptions import FilenameNoneOrEmptyError, SizeUnknownError
+from .exceptions import FilenameNoneOrEmptyError, SizeUnknownError, FileAccessDeniedError
 from ..domain.entities import Video, VideoId, VideoStatus, Filename, SizeBytes, UserId
 from ..domain.exceptions import FileNotFound
 
@@ -39,11 +39,13 @@ class VideoService:
 
         return created_video
 
-    async def get_by_id(self, id: uuid.UUID):
+    async def get_by_id(self, id: uuid.UUID, current_user_id: uuid.UUID):
         video = await self.video_repository.get(id)
 
         if not video:
             raise FileNotFound()
+        if video.owner_id.value != current_user_id:
+            raise FileAccessDeniedError()
 
         return video
 
