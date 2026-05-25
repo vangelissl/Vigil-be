@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from vigil_tasks.analysis import run_inference
 
 from vigil.core.config import settings
-from vigil.core.minio.client import upload_file
 
 from vigil.shared.exception_handlers import register_exception_handlers
 
@@ -12,6 +11,9 @@ from vigil.modules.auth.presentation.exception_handlers import register_exceptio
 
 from vigil.modules.users.presentation.api.v1.router import router as users_router
 from vigil.modules.users.presentation.exception_handlers import register_exception_handler as register_users_handlers
+
+from vigil.modules.videos.presentation.api.v1.router import router as videos_router
+from vigil.modules.videos.presentation.exception_handlers import register_exception_handlers as register_videos_handlers
 
 def create_app() -> FastAPI:
     application = FastAPI(
@@ -32,7 +34,7 @@ def create_app() -> FastAPI:
     register_exception_handlers(application)
     register_auth_handlers(application)
     register_users_handlers(application)
-
+    register_videos_handlers(application)
 
     @application.get("/health")
     async def health_check() -> dict[str, str]:
@@ -42,14 +44,10 @@ def create_app() -> FastAPI:
     async def test_task():
         run_inference.delay("test-123") # type: ignore
         return {"status": "dispatched"}
-
-    @application.get("/test-upload")
-    async def test_upload():
-        upload_file()
-        return {"status": "uploaded"}
     
     application.include_router(auth_router)
     application.include_router(users_router)
+    application.include_router(videos_router)
 
     return application
 

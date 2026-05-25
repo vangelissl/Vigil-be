@@ -11,6 +11,8 @@ from vigil.modules.auth.application.dto import LoginDTO, RegisterDTO, TokenPairD
 from vigil.modules.auth.application.service import AuthService
 from vigil.security.hashing import PasswordHasher
 from vigil.security.token import TokenService, TokenPayload
+from vigil.security.dependencies import get_current_user
+
 from unittest.mock import AsyncMock, MagicMock, patch
 import uuid
 import os
@@ -24,6 +26,8 @@ from src.vigil.modules.users.infrastructure.repository import UserRepository
 
 from vigil.modules.videos.domain.entities import Video, VideoId, VideoStatus, SizeBytes, Filename
 from vigil.modules.videos.infrastructure.repository import VideoRepository
+from vigil.modules.videos.application.service import VideoService
+from vigil.modules.videos.dependencies import get_video_repository, get_video_service
 from vigil.main import app
 
 
@@ -253,12 +257,25 @@ def mock_current_user(user_id, username):
 
 @pytest.fixture
 def client_with_user_service(client, mock_user_service, mock_current_user):
-    from vigil.main import app
-    from vigil.modules.users.dependencies import get_user_service
-    from vigil.security.dependencies import get_current_user
-    
     app.dependency_overrides[get_user_service] = lambda: mock_user_service
     app.dependency_overrides[get_current_user] = lambda: mock_current_user
     yield mock_user_service, client
     app.dependency_overrides.pop(get_user_service, None)
+    app.dependency_overrides.pop(get_current_user, None)
+
+
+@pytest.fixture
+def mock_video_service():
+    service = MagicMock()
+    service.upload_video = AsyncMock()
+    service.get_by_id = AsyncMock()
+    service.list_by_owner = AsyncMock()
+    return service
+
+@pytest.fixture
+def client_with_video_service(client, mock_video_service, mock_current_user):
+    app.dependency_overrides[get_video_service] = lambda: mock_video_service
+    app.dependency_overrides[get_current_user] = lambda: mock_current_user
+    yield mock_video_service, client
+    app.dependency_overrides.pop(get_video_service, None)
     app.dependency_overrides.pop(get_current_user, None)
