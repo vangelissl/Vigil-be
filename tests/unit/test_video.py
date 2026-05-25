@@ -7,7 +7,7 @@ from vigil.shared.exceptions import BusinessRuleValidationException
 
 from vigil.modules.videos.domain.value_objects import VideoId, VideoStatus, Filename, SizeBytes
 from vigil.modules.videos.domain.entities import Video, UserId
-from vigil.modules.videos.domain.exceptions import InvalidVideoStateTransition
+from vigil.modules.videos.domain.exceptions import InvalidVideoStateTransition, WrongFileExtensionError
 
 
 video = Video(
@@ -28,10 +28,15 @@ video = Video(
 	("invalid_file.py", True),
 	("valid_file.mp4", False),
 	("valid_file.avi", False),
+	("valid_file.mov", False),
+	(".mp4", True),
+	(".avi", True),
+	(".mp4", True),
+	("*.avi", False)
 ])
 def test_video_filename(filename_str: str, raises_exception: bool):
 	if raises_exception:
-		with pytest.raises(BusinessRuleValidationException):
+		with pytest.raises(WrongFileExtensionError):
 			Filename(filename_str)
 	else:
 		filename = Filename(filename_str)

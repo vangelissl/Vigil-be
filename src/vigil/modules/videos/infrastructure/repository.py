@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..ports import VideoRepositoryProtocol
 
-from ..domain.exceptions import VideoNotFound, VideoAlreadyExists
+from ..domain.exceptions import FileNotFound, FileAlreadyExists
 from ..domain.value_objects import VideoId, Filename, SizeBytes
 from ..domain.entities import Video, UserId
 
@@ -51,7 +51,7 @@ class VideoRepository(VideoRepositoryProtocol):
             await self.session.flush()
             return self._to_domain(model)
         else:
-            raise VideoAlreadyExists()
+            raise FileAlreadyExists()
 
     async def get(self, video_id: uuid.UUID) -> Video | None:
         video = await self.session.get(VideoModel, video_id)
@@ -76,7 +76,7 @@ class VideoRepository(VideoRepositoryProtocol):
         video_to_update = await self.session.get(VideoModel, video_id)
 
         if not video_to_update:
-            raise VideoNotFound("user not found")
+            raise FileNotFound("user not found")
         video_to_update.filename = video.filename.value
         video_to_update.minio_path = video.minio_path
         video_to_update.owner_id = video.owner_id.value

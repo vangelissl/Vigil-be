@@ -67,16 +67,13 @@ class TestGetMe:
         response = await client.get(GET_ME_URL)
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
-        # assert "Unauthorized" in response.json()["detail"] or "user" in response.json()["detail"].lower()
+        assert "Unauthorized" in response.json()["detail"] or "user" in response.json()["detail"].lower()
     
-    # TODO: refactor exception handlers
 
     async def test_get_me_missing_auth_header(self, client):
         """Should return 422 when validation fails (missing body)"""
         response = await client.get(GET_ME_URL)
 
-        # GET /users/me/ expects current_user dependency which requires refresh_token cookie
-        # Without it, FastAPI returns 422 for missing required parameter
         assert response.status_code in [status.HTTP_403_FORBIDDEN, status.HTTP_422_UNPROCESSABLE_CONTENT]
 
 
