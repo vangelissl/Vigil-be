@@ -1,10 +1,14 @@
 from ....shared.exceptions import BusinessRuleValidationException, BusinessRuleException
 
-class NegativeScoreError(BusinessRuleValidationException):
+class InvalidClassificationScore(BusinessRuleValidationException):
+	def __init__(self, message: str = "Invalid classification score"):
+		super().__init__(message)
+
+class NegativeScoreError(InvalidClassificationScore):
 	def __init__(self, message: str = "Analysis score cannot be negative"):
 		super().__init__(message)
 
-class ScoreGreaterThanOneError(BusinessRuleValidationException):
+class ScoreGreaterThanOneError(InvalidClassificationScore):
 	def __init__(self, message: str = "Analysis score must be in [0,1] range"):
 		super().__init__(message)
 
