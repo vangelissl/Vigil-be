@@ -2,6 +2,7 @@ from typing import List, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .video import VideoModel
+    from .analysis import AnalysisModel
 
 from datetime import UTC, datetime
 
@@ -26,5 +27,6 @@ class UserModel(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
-    videos: Mapped[List["VideoModel"]] = relationship( # type: ignore
-        back_populates="owner")  
+    videos: Mapped[List["VideoModel"]] = relationship(back_populates="owner")
+    analyses: Mapped[List["AnalysisModel"]
+                     ] = relationship(back_populates="owner")
