@@ -2,7 +2,7 @@ from enum import Enum
 
 import uuid
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 from ....shared.base import ValueObject
 
@@ -32,3 +32,10 @@ class ClassificationResult:
             raise NegativeScoreError()
         if self.all_scores[self.predicted_class] > 1.0:
             raise ScoreGreaterThanOneError()
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+    @staticmethod
+    def from_dict(data: dict) -> "ClassificationResult":
+        return ClassificationResult(**data)
