@@ -11,23 +11,24 @@ from .exceptions import NegativeScoreError, ScoreGreaterThanOneError
 
 @dataclass(frozen=True)
 class AnalysisId(ValueObject):
-	value: uuid.UUID
+    value: uuid.UUID
 
 
 class AnalysisStatus(Enum):
-	PENDING = "pending"
-	PROCESSING = "processing"
-	COMPLETED  = "completed"
-	FAILED = "failed"
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
 
 
 @dataclass(frozen=True)
-class ClassificationResult(ValueObject):
-	value: float
+class ClassificationResult:
+    predicted_class: str
+    confidence: float
+    all_scores: dict[str, float]
 
-	def __post_init__(self):
-		if self.value < 0:
-			raise NegativeScoreError()
-		
-		if self.value > 1:
-			raise ScoreGreaterThanOneError()
+    def __post_init__(self):
+        if self.all_scores[self.predicted_class] < 0.0:
+            raise NegativeScoreError()
+        if self.all_scores[self.predicted_class] > 1.0:
+            raise ScoreGreaterThanOneError()

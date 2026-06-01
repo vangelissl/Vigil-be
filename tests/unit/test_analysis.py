@@ -17,24 +17,32 @@ analysis = Analysis(
 )
 
 
-@pytest.mark.parametrize("score, raises_exception", [
-    (0, False),
-    (0.01, False),
-    (0.5, False),
-    (0.999, False),
-    (1, False),
-    (-1, True),
-    (5, True)
+@pytest.mark.parametrize("pred_label, confidence, scores, raises_exception", [
+    ("violence", 1, {"violence": 0, "non-violence": 1}, False),
+    ("violence", 0.7, {"violence": 0.99, "non-violence": 0.01}, False),
+    ("non-violence", 0.5, {"violence": 0.49, "non-violence": 0.51}, False),
+    ("non-violence", 1, {"violence": 0.001, "non-violence": 0.999}, False),
+    ("violence", 1, {"violence": -1, "non-violence": 0}, True),
+    ("violence", 0, {"violence": 5, "non-violence": 0}, True)
 ])
-def test_classification_result_create(score: float, raises_exception: bool):
+def test_classification_result_create(pred_label: str, confidence: float, scores: dict[str, float], raises_exception: bool):
     if raises_exception:
         with pytest.raises(InvalidClassificationScore):
-            classification_result = ClassificationResult(score)
+            classification_result = ClassificationResult(
+                predicted_class=pred_label,
+                confidence=confidence,
+                all_scores=scores
+            )
     else:
-        classification_result = ClassificationResult(score)
+        classification_result = classification_result = ClassificationResult(
+            predicted_class=pred_label,
+            confidence=confidence,
+            all_scores=scores
+        )
 
         assert classification_result is not None
-        assert classification_result.value == score
+        assert classification_result.predicted_class == pred_label
+        assert classification_result.confidence == confidence
 
 
 @pytest.mark.parametrize("prev_status, new_status, method, raises_exception", [
@@ -65,11 +73,19 @@ def test_analysis_state_transition(prev_status: AnalysisStatus, new_status: Anal
     if raises_exception:
         with pytest.raises(InvalidAnalysisStateTransition):
             if new_status == AnalysisStatus.COMPLETED:
-                method(ClassificationResult(0.1))
+                method(ClassificationResult(
+                    predicted_class="violence",
+                    confidence=1,
+                    all_scores={"violence": 1, "non-violence": 0}
+                ))
             method()
     else:
         if new_status == AnalysisStatus.COMPLETED:
-            method(ClassificationResult(0.1))
+            method(ClassificationResult(
+                predicted_class="violence",
+                confidence=1,
+                all_scores={"violence": 1, "non-violence": 0}
+            ))
         else:
             method()
 

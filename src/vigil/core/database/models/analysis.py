@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 
 import uuid
 
-from sqlalchemy import DateTime, UUID, ForeignKey, Float, CheckConstraint, Enum as SAEnum
+from sqlalchemy import DateTime, UUID, ForeignKey, JSON, Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ....modules.analysis.domain.value_objects import AnalysisStatus
@@ -23,8 +23,7 @@ class AnalysisModel(Base):
     video_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("videos.id"))
     owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
 
-    classification_result: Mapped[float] = mapped_column(Float, CheckConstraint(
-        "classification_result >= 0.0 AND classfication_result <= 1.0"), nullable=True)
+    classification_result: Mapped[dict] = mapped_column(JSON, nullable=True)
     status: Mapped[AnalysisStatus] = mapped_column(
         SAEnum(AnalysisStatus, name="analysisstatus"),
         nullable=False

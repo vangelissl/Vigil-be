@@ -5,4 +5,4 @@ from dataclasses import dataclass
 class ClassificationResult:
     predicted_class: str
     confidence: float
-    all_scores: dict[str, str]
+    all_scores: dict[str, float]
