@@ -1,5 +1,10 @@
 from ....shared.exceptions import BusinessRuleValidationException, BusinessRuleException
 
+
+class AnalysisNotFoundError(BusinessRuleException):
+	def __init__(self, message: str = "Analysis not found"):
+		super().__init__(message)
+
 class InvalidClassificationScore(BusinessRuleValidationException):
 	def __init__(self, message: str = "Invalid classification score"):
 		super().__init__(message)
