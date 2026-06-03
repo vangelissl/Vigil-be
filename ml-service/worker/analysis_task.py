@@ -13,6 +13,8 @@ async def execute_analysis(analysis_id: str):
 	recognizer = Recognizer(str(MODEL_CONFIG_PATH), str(CHECKPOINT_PATH), DEVICE)
 
 	try:
+		db.write_result(analysis_id, "PROCESSING", None)
+		
 		minio_path = db.get_video_path(analysis_id)
 		if not minio_path:
 			raise ValueError(f"Analysis {analysis_id} not found")
