@@ -35,4 +35,3 @@ class Analysis(Entity):
 		if self.status in [AnalysisStatus.COMPLETED, AnalysisStatus.FAILED]:
 			raise InvalidAnalysisStateTransition("Analysis is already completed or failed")
 		self.status = AnalysisStatus.FAILED
-
