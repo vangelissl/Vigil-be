@@ -2,7 +2,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import json
 import os
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 
 
 class VideoDatabase:
@@ -33,5 +33,5 @@ class VideoDatabase:
                     UPDATE analyses
                     SET status = %s, classification_result = %s, completed_at = %s
                     WHERE id = %s
-                """, (status, result_json, datetime.now(UTC), analysis_id))
+                """, (status, result_json, datetime.now(timezone.utc), analysis_id))
                 conn.commit()
