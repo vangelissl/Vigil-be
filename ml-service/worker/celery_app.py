@@ -1,9 +1,8 @@
-from celery import Celery
 import os
+from celery import Celery
+from .analysis_task import execute_analysis
 
-
-celery = Celery(
-    "ml-worker", broker=os.environ["CELERY_BROKER_URL"])
+celery = Celery("ml-worker", broker=os.environ["CELERY_BROKER_URL"])
 
 celery.conf.update(
     task_ignore_result=True,
@@ -14,13 +13,11 @@ celery.conf.update(
     task_routes={
         "run_inference": {"queue": "ml"},
     },
+    worker_pool='solo',
 )
 
-from .analysis_task import execute_analysis
-
+# Define the task here, not imported from vigil_tasks
 @celery.task(name="run_inference", bind=True)
-async def run_inference(analysis_id: str):
-	return await execute_analysis(analysis_id)
-
-# Register analysis task
-from vigil_tasks import analysis # noqa: F401
+def run_inference_impl(self, analysis_id: str):
+    import asyncio
+    return asyncio.run(execute_analysis(analysis_id))

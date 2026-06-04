@@ -1,7 +1,9 @@
 from pydantic import BaseModel
+import uuid
 
 
-class VideoDTO(BaseModel):
-	filename: str
-	size_bytes: int
-	status: str
+class VideoSchema(BaseModel):
+    id: uuid.UUID
+    filename: str
+    size_bytes: int
+    status: str

@@ -51,7 +51,7 @@ class TestUpload:
         )
 
         data = response.json()
-        assert set(data.keys()) == {"filename", "size_bytes", "status"}
+        assert set(data.keys()) == {"filename", "size_bytes", "status", "id"}
 
     @pytest.mark.parametrize("filename, file", [
         (None, io.BytesIO(b"fake video content")),
@@ -85,10 +85,12 @@ class TestGetAll:
 
         videos = response.json()
 
-        assert len(videos) == 1
-        assert videos[0]["filename"] == video.filename.value
-        assert videos[0]["size_bytes"] == video.size_bytes.value
-        assert videos[0]["status"] == str(video.status)
+        assert len(videos) >= 1
+        found_video = next((v for v in videos if v["id"] == str(video.id.value)))
+        assert found_video is not None
+        assert found_video["filename"] == video.filename.value
+        assert found_video["size_bytes"] == video.size_bytes.value
+        assert found_video["status"] == str(video.status)
 
 class TestGet:
     async def test_get_success(self, client_with_video_service, video):

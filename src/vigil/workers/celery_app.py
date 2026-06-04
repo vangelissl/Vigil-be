@@ -3,7 +3,8 @@ from celery import Celery
 from vigil.core.config import settings
 
 
-celery = Celery("vigil", broker=settings.celery_broker_url, task_ignore_result=True)
+celery = Celery("vigil", broker=settings.celery_broker_url,
+                task_ignore_result=True)
 
 celery.conf.update(
     task_ignore_result=True,
@@ -15,6 +16,3 @@ celery.conf.update(
         "run_inference": {"queue": "ml"},
     },
 )
-
-# Register analysis task
-from vigil_tasks import analysis # noqa: F401

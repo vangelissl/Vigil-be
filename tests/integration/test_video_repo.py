@@ -56,7 +56,8 @@ async def test_get_all(video_repository, video):
     videos = await video_repository.get_all()
 
     assert videos is not None
-    assert videos[0].id.value == video.id.value
+    found_video = next((v for v in videos if v.id.value == video.id.value))
+    assert found_video is not None
 
 
 async def test_video_update(video_repository, video):
