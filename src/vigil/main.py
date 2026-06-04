@@ -15,6 +15,7 @@ from vigil.modules.videos.presentation.api.v1.router import router as videos_rou
 from vigil.modules.videos.presentation.exception_handlers import register_exception_handlers as register_videos_handlers
 
 from vigil.modules.analysis.presentation.api.v1.router import router as analyses_router
+from vigil.modules.analysis.presentation.exception_handlers import register_exception_handlers as register_analyses_handlers
 
 def create_app() -> FastAPI:
     application = FastAPI(
@@ -36,10 +37,12 @@ def create_app() -> FastAPI:
     register_auth_handlers(application)
     register_users_handlers(application)
     register_videos_handlers(application)
+    register_analyses_handlers(application)
 
-    @application.get("/health")
-    async def health_check() -> dict[str, str]:
-        return {"status": "ok"}
+    if settings.debug:
+        @application.get("/health")
+        async def health_check() -> dict[str, str]:
+            return {"status": "ok"}
     
     application.include_router(auth_router)
     application.include_router(users_router)
