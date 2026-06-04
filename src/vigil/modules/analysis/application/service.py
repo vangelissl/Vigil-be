@@ -6,15 +6,16 @@ from ..domain.exceptions import AnalysisNotFoundError
 from ...videos.application.service import VideoService
 from ..ports import AnalysisRepositoryProtocol
 
-from vigil_tasks.analysis import run_inference
-
 from .exceptions import AnalysisAccessDeniedError
+
+from ....workers.dependencies import Celery
 
 
 class AnalysisService:
-    def __init__(self, analysis_repo: AnalysisRepositoryProtocol, video_service: VideoService):
+    def __init__(self, analysis_repo: AnalysisRepositoryProtocol, video_service: VideoService, celery: Celery):
         self.analysis_repo = analysis_repo
         self.video_service = video_service
+        self.celery = celery
 
     async def trigger(self, video_id: uuid.UUID, current_user_id: uuid.UUID) -> Analysis:
         video = await self.video_service.get_by_id(video_id, current_user_id)
@@ -28,7 +29,7 @@ class AnalysisService:
         )
 
         await self.analysis_repo.create(analysis)
-        run_inference.delay(str(analysis.id.value)) # type: ignore
+        self.celery.send_task('run_inference', args=[str(analysis.id.value)])
 
         return analysis
 
@@ -39,7 +40,7 @@ class AnalysisService:
         if not analysis:
             raise AnalysisNotFoundError()
         
-        if analysis.owner_id != current_user_id:
+        if analysis.owner_id.value != current_user_id:
             raise AnalysisAccessDeniedError()
 
         return analysis
