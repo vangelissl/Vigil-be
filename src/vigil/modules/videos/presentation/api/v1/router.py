@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, UploadFile
+from fastapi import APIRouter, Depends, UploadFile, File
 
 from ......security.dependencies import get_current_user, CurrentUserDTO
 
@@ -14,7 +14,7 @@ router = APIRouter()
 
 @router.post("/videos/upload/", tags=["video"])
 async def upload(
-        file: UploadFile,
+        file: UploadFile = File(...),
         video_service: VideoService = Depends(get_video_service),
         current_user: CurrentUserDTO = Depends(get_current_user)
 ) -> VideoSchema:
@@ -58,3 +58,15 @@ async def get(
         filename=video.filename.value,
         size_bytes=video.size_bytes.value,
         status=str(video.status))
+
+
+@router.get("/videos/{video_id}/download", tags=["video"])
+async def download(
+    video_id: uuid.UUID,
+    video_service: VideoService = Depends(get_video_service),
+    current_user: CurrentUserDTO = Depends(get_current_user)
+) -> dict:
+    video = await video_service.get_by_id(video_id, current_user.id)
+    download_url = video_service.storage.get_url(video.minio_path if hasattr(video.minio_path, 'value') else video.minio_path)
+    
+    return {"url": download_url}

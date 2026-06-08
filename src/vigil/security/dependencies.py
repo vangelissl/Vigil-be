@@ -16,13 +16,18 @@ async def get_token_service() -> TokenService:
 
 
 async def get_current_user(
-        access_token: Annotated[str | None, Header()],
+        authorization: Annotated[str | None, Header()] = None,
         service: TokenService = Depends(get_token_service)) -> CurrentUserDTO:
     """Returns the current user if they are logged, otherwise raises an exception"""
-    if not access_token:
+    if not authorization:
         raise HTTPException(status_code=401, detail="Not logged in")
+    
+    # Extract token from "Bearer <token>"
     try:
-        user = service.decode_token(access_token)
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError("Invalid scheme")
+        user = service.decode_token(token)
     except:
         raise HTTPException(status_code=401, detail="Not logged in")
 

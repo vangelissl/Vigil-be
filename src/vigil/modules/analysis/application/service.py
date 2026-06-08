@@ -44,3 +44,6 @@ class AnalysisService:
             raise AnalysisAccessDeniedError()
 
         return analysis
+    
+    async def list_by_owner(self, owner_id: uuid.UUID) -> list[Analysis]:
+        return await self.analysis_repo.get_all_by_owner(owner_id)
